@@ -1,0 +1,54 @@
+/* Research Log Companion */
+
+.rlc-modal .rlc-modal-help {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+	margin: 0 0 var(--size-4-3);
+}
+
+.rlc-modal .rlc-modal-error {
+	color: var(--text-error);
+	font-size: var(--font-ui-small);
+	margin: var(--size-4-2) 0 0;
+}
+
+.rlc-modal .rlc-modal-wide {
+	width: 100%;
+	min-width: 20em;
+}
+
+.rlc-modal .rlc-modal-textarea {
+	width: 100%;
+	min-width: 20em;
+	font-size: var(--font-ui-small);
+}
+
+.rlc-pick-detail {
+	display: block;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller);
+}
+
+.rlc-settings-help {
+	color: var(--text-muted);
+	font-size: var(--font-ui-small);
+}
+
+.rlc-project {
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	padding: 0 var(--size-4-3);
+	margin: 0 0 var(--size-4-3);
+}
+
+.rlc-settings-wide {
+	width: 100%;
+	min-width: 18em;
+}
+
+.rlc-settings-textarea {
+	width: 100%;
+	min-width: 18em;
+	font-family: var(--font-monospace);
+	font-size: var(--font-ui-small);
+}

@@ -1,0 +1,10 @@
+{
+	"id": "research-log-companion",
+	"name": "Research Log Companion",
+	"version": "0.1.0",
+	"minAppVersion": "1.7.2",
+	"description": "An append-only lab notebook: log experiments, results, decisions and ideas with git commit, parameters, data hashes and figures filled in automatically, then query, compare and report on them.",
+	"author": "Tony Peonio",
+	"authorUrl": "https://github.com/TonyPeonio",
+	"isDesktopOnly": true
+}
