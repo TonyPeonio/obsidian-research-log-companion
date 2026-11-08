@@ -138,13 +138,18 @@ settings tab are the thin Obsidian layer.
 
 ## The Companion suite
 
-Research Log Companion is one of a set of local-first Obsidian tools for students and researchers
-by [TonyPeonio](https://github.com/TonyPeonio): [Local Vault Agent](https://github.com/TonyPeonio/obsidian-local-vault-agent)
-(questions across the whole vault), [Lecture Companion](https://github.com/TonyPeonio/obsidian-lecture-companion)
-(recordings to course notes), [Canvas Companion](https://github.com/TonyPeonio/obsidian-canvas-companion),
-[Exam Companion](https://github.com/TonyPeonio/obsidian-exam-companion) (study plans and quizzes) and
-[Paper Companion](https://github.com/TonyPeonio/obsidian-paper-companion) (reading papers). All do the
-work on your own machine, show every change they make, and publish their numbers.
+Research Log Companion is part of the Companion suite of local-first Obsidian plugins by Tony Peonio
+for students and researchers: your machine does the work, every change is a diff you approve, and
+the numbers are published. The others are Local Vault Agent (local Ollama agent that searches,
+compiles, edits notes), Lecture Companion (live local lecture transcription, Canvas slides, Ollama
+summaries), Canvas Companion (Canvas LMS assignments, grades and announcements as notes), Exam
+Companion (day-by-day study plan, daily quizzes and flashcards), Paper Companion (Zotero search by
+meaning, page-cited reading notes), Meeting Companion (local meeting transcription, decisions,
+action items, weekly digest), Job Hunt Companion (job applications as notes, resume tailoring,
+interview questions), Fellowship Companion (grants and fellowships: deadlines, materials, letters,
+eligibility), Code Companion (commits in the daily note, weekly report, TODOs), Teaching Companion
+(local-model rubric grading with verbatim evidence) and Branching Table of Contents (parent/child
+properties as a rooted family tree). All at [github.com/TonyPeonio](https://github.com/TonyPeonio).
 
 ## License
 
