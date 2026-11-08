@@ -1,5 +1,6 @@
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import type ResearchLogPlugin from "./main";
+import { repoPathProblem } from "./core/git";
 import { DEFAULT_SETTINGS, defaultLogPath, newProject, type Project } from "./settings";
 
 export class ResearchLogSettingTab extends PluginSettingTab {
@@ -164,18 +165,24 @@ export class ResearchLogSettingTab extends PluginSettingTab {
 				t.inputEl.addClass("rlc-settings-wide");
 			});
 
-		new Setting(box)
+		const repoSetting = new Setting(box)
 			.setName("Code repository folder")
-			.setDesc("Absolute path of the git repository. Branch, commit, dirty state and changed config files come from here. Optional.")
-			.addText((t) => {
-				t.setPlaceholder("C:\\Users\\you\\code\\thesis or /home/you/code/thesis")
-					.setValue(p.repoPath)
-					.onChange(async (v) => {
-						p.repoPath = v.trim();
-						await this.plugin.saveSettings();
-					});
-				t.inputEl.addClass("rlc-settings-wide");
-			});
+			.setDesc("The folder on this machine where the repository is checked out, not its GitHub URL: git runs locally, so private repositories work and nothing is fetched. Branch, commit, dirty state and changed config files come from here. Optional.");
+		const repoWarning = repoSetting.descEl.createDiv({ cls: "rlc-settings-warning" });
+		const showRepoWarning = (path: string): void => {
+			repoWarning.setText(repoPathProblem(path) ?? "");
+		};
+		showRepoWarning(p.repoPath);
+		repoSetting.addText((t) => {
+			t.setPlaceholder("C:\\Users\\you\\code\\thesis or /home/you/code/thesis")
+				.setValue(p.repoPath)
+				.onChange(async (v) => {
+					p.repoPath = v.trim();
+					showRepoWarning(p.repoPath);
+					await this.plugin.saveSettings();
+				});
+			t.inputEl.addClass("rlc-settings-wide");
+		});
 
 		new Setting(box)
 			.setName("Watched data folders")

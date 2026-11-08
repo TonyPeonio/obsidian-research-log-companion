@@ -52,3 +52,11 @@
 	font-family: var(--font-monospace);
 	font-size: var(--font-ui-small);
 }
+
+.rlc-settings-warning {
+	color: var(--text-error);
+	margin-top: 4px;
+}
+.rlc-settings-warning:empty {
+	display: none;
+}

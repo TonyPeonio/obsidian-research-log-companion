@@ -13,9 +13,25 @@ export type GitInfo =
 			dirtyFiles: string[];
 			remoteUrl?: string;
 	  }
-	| { ok: false; reason: "git-unavailable" | "not-a-repo" | "no-commits"; detail?: string };
+	| { ok: false; reason: "git-unavailable" | "not-a-repo" | "no-commits" | "not-a-folder"; detail?: string };
+
+/**
+ * Why a configured repository path cannot work, before git is even run: a web address (the
+ * GitHub page of the repository) instead of the folder where it is checked out. Undefined when
+ * the path looks like a folder.
+ */
+export function repoPathProblem(repoPath: string): string | undefined {
+	const p = repoPath.trim();
+	if (!p) return undefined;
+	if (/^(?:https?|ssh|git):\/\//i.test(p) || /^git@[^:]+:/.test(p) || /^(?:www\.)?(?:github|gitlab|bitbucket)\.(?:com|org)\//i.test(p)) {
+		return `"${p}" is a web address. Enter the folder on this machine where the repository is checked out (for example C:\\Users\\you\\code\\project or /home/you/code/project); the plugin runs git there and never contacts the remote, so a private repository is fine.`;
+	}
+	return undefined;
+}
 
 export function gitInfo(runGit: RunGit | null, repoPath: string): GitInfo {
+	const problem = repoPathProblem(repoPath);
+	if (problem) return { ok: false, reason: "not-a-folder", detail: repoPath.trim() };
 	if (!runGit) return { ok: false, reason: "git-unavailable" };
 	let inside: string;
 	try {
@@ -72,6 +88,8 @@ export function renderRepoLine(info: GitInfo): string {
 				return "git not available";
 			case "not-a-repo":
 				return `not a git repository${info.detail ? ` (${info.detail})` : ""}`;
+			case "not-a-folder":
+				return `repository folder is a web address (${info.detail ?? ""}); set the checked-out folder on this machine in settings`;
 			case "no-commits":
 				return "git repository with no commits yet";
 		}

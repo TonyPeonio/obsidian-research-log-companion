@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { browsableRemote, changedFilesSince, gitInfo, parsePorcelain, renderRepoLine } from "../src/core/git";
+import { browsableRemote, changedFilesSince, gitInfo, parsePorcelain, renderRepoLine, repoPathProblem } from "../src/core/git";
 import { cleanRepo, fakeGit } from "./fakes";
 
 describe("gitInfo", () => {
@@ -16,6 +16,21 @@ describe("gitInfo", () => {
 		expect(renderRepoLine(gitInfo(fakeGit({ "rev-parse --is-inside-work-tree": new Error("fatal: not a git repository") }), "/x"))).toBe("not a git repository (/x)");
 		expect(renderRepoLine(gitInfo(fakeGit({ "rev-parse --is-inside-work-tree": new Error("spawn git ENOENT") }), "/x"))).toBe("git not available");
 		expect(renderRepoLine(gitInfo(fakeGit({ "rev-parse --is-inside-work-tree": "true", "rev-parse --short HEAD": new Error("fatal: ambiguous argument 'HEAD'") }), "/x"))).toBe("git repository with no commits yet");
+	});
+
+	it("tells a web address from a folder before running git", () => {
+		const url = "https://github.com/TonyPeonio/obsidian-fellowship-companion";
+		expect(repoPathProblem(url)).toMatch(/web address.*folder on this machine.*private repository is fine/);
+		expect(repoPathProblem("git@github.com:TonyPeonio/thesis.git")).toMatch(/web address/);
+		expect(repoPathProblem("github.com/TonyPeonio/thesis")).toMatch(/web address/);
+		expect(repoPathProblem("C:\\Users\\tony\\code\\thesis")).toBeUndefined();
+		expect(repoPathProblem("/home/tony/code/thesis")).toBeUndefined();
+		expect(repoPathProblem("")).toBeUndefined();
+		let ran = false;
+		const info = gitInfo(() => ((ran = true), "true"), url);
+		expect(ran).toBe(false);
+		expect(info).toEqual({ ok: false, reason: "not-a-folder", detail: url });
+		expect(renderRepoLine(info)).toBe(`repository folder is a web address (${url}); set the checked-out folder on this machine in settings`);
 	});
 
 	it("lists files changed since the previous entry's commit plus uncommitted ones", () => {

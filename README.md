@@ -33,8 +33,10 @@ bullet it writes cites the entry it came from.
 ## Usage
 
 1. In **Settings → Research Log Companion**, add a project: a name, the log note path (default
-   `Research/<name> log.md`), and optionally the absolute path of your code repository, one or more
-   absolute paths of data/results folders to watch, and a figures folder inside the vault.
+   `Research/<name> log.md`), and optionally the folder on this machine where your code repository
+   is checked out (a path such as `C:\Users\you\code\thesis`, not the GitHub URL: git runs locally
+   and never contacts the remote, so private repositories work), one or more absolute paths of
+   data/results folders to watch, and a figures folder inside the vault.
 2. After a run, use **Log an experiment** (ribbon flask icon or command palette). Type what you ran
    and any notes; press Ctrl/Cmd+Enter. The entry is appended to the log:
 
@@ -81,8 +83,10 @@ ignores anything else in the note, so you can write freely between entries.
 
 - *repo:* `git rev-parse` for the branch and short commit, `git status --porcelain` for the dirty
   count, `git remote get-url origin` for the card's repository link. Git is run with
-  `child_process` in the repository folder. If git is missing or the folder is not a repository,
-  the line says so and the entry is still written.
+  `child_process` in the repository folder. If git is missing, the folder is not a repository, or
+  the setting holds a web address instead of a folder, the line says so and the entry is still
+  written. The remote URL is only recorded for the reproducibility card's link; nothing is fetched,
+  so a private repository needs no token.
 - *params:* the plugin looks at files changed since the previous entry (uncommitted changes from
   `git status`, plus `git diff --name-only <previous entry's commit>..HEAD`; when git names none,
   files in the repository newer than the previous entry) with extensions `.yaml .yml .json .toml
