@@ -146,28 +146,41 @@ export default class ResearchLogPlugin extends Plugin {
 		}
 	}
 
+	/** Runs a query command; any vault or git failure ends in a Notice instead of a silent rejection. */
+	private async guarded(what: string, fn: () => Promise<void>): Promise<void> {
+		try {
+			await fn();
+		} catch (err) {
+			new Notice(`Could not ${what}: ${(err as Error).message}`, 10000);
+		}
+	}
+
 	async showTimeline(): Promise<void> {
 		const p = await this.pickProject();
 		if (!p) return;
-		const entries = await this.loadEntries(p);
-		await this.writeQuery(p, "Timeline", renderTimeline(entries, p.logPath));
-		new Notice(`Timeline of ${entries.length} entries written.`);
+		await this.guarded("write the timeline", async () => {
+			const entries = await this.loadEntries(p);
+			await this.writeQuery(p, "Timeline", renderTimeline(entries, p.logPath));
+			new Notice(`Timeline of ${entries.length} entries written.`);
+		});
 	}
 
 	async compareRuns(): Promise<void> {
 		const p = await this.pickProject();
 		if (!p) return;
-		const entries = await this.loadEntries(p);
-		const runs = entries.filter((e) => e.type === "run" || e.type === "result");
-		if (runs.length < 2) {
-			new Notice("Compare needs at least two run or result entries.");
-			return;
-		}
-		const a = await this.pickEntry(runs, "First run (A)");
-		if (!a) return;
-		const b = await this.pickEntry(runs, "Second run (B)", (e) => e.id !== a.id);
-		if (!b) return;
-		await this.writeQuery(p, `Compare ${a.id} vs ${b.id}`, renderCompare(a, b, p.logPath));
+		await this.guarded("compare the runs", async () => {
+			const entries = await this.loadEntries(p);
+			const runs = entries.filter((e) => e.type === "run" || e.type === "result");
+			if (runs.length < 2) {
+				new Notice("Compare needs at least two run or result entries.");
+				return;
+			}
+			const a = await this.pickEntry(runs, "First run (A)");
+			if (!a) return;
+			const b = await this.pickEntry(runs, "Second run (B)", (e) => e.id !== a.id);
+			if (!b) return;
+			await this.writeQuery(p, `Compare ${a.id} vs ${b.id}`, renderCompare(a, b, p.logPath));
+		});
 	}
 
 	async findRuns(): Promise<void> {
@@ -177,25 +190,33 @@ export default class ResearchLogPlugin extends Plugin {
 		modal.open();
 		const query = await modal.result;
 		if (!query) return;
-		const entries = await this.loadEntries(p);
-		const matches = findByParam(entries, query);
-		await this.writeQuery(p, `Runs with ${query}`, renderFindResults(query, matches, p.logPath));
-		new Notice(`${matches.length} entr${matches.length === 1 ? "y" : "ies"} match ${query}.`);
+		await this.guarded("search the log", async () => {
+			const entries = await this.loadEntries(p);
+			const matches = findByParam(entries, query);
+			await this.writeQuery(p, `Runs with ${query}`, renderFindResults(query, matches, p.logPath));
+			new Notice(`${matches.length} entr${matches.length === 1 ? "y" : "ies"} match ${query}.`);
+		});
 	}
 
 	async weeklyReport(): Promise<void> {
 		const p = await this.pickProject();
 		if (!p) return;
-		const entries = await this.loadEntries(p);
 		const until = new Date();
 		const folder = projectFolder(p, this.settings.outputFolder);
 		let since = new Date(until.getTime() - 7 * DAY_MS);
-		// Since the last report, when one exists and is newer than seven days ago.
-		const prefix = `${folder}/${p.name} report `;
-		const reports = this.vault.listNotes(folder).filter((path) => path.startsWith(prefix));
-		for (const path of reports) {
-			const u = reportUntil(await this.vault.read(path));
-			if (u !== null && u > since.getTime() && u < until.getTime()) since = new Date(u);
+		let entries: Entry[];
+		try {
+			entries = await this.loadEntries(p);
+			// Since the last report, when one exists and is newer than seven days ago.
+			const prefix = `${folder}/${p.name} report `;
+			const reports = this.vault.listNotes(folder).filter((path) => path.startsWith(prefix));
+			for (const path of reports) {
+				const u = reportUntil(await this.vault.read(path));
+				if (u !== null && u > since.getTime() && u < until.getTime()) since = new Date(u);
+			}
+		} catch (err) {
+			new Notice(`Could not read the log: ${(err as Error).message}`, 10000);
+			return;
 		}
 		const window = entries.filter((e) => e.time > since.getTime() && e.time <= until.getTime());
 		if (window.length === 0) {
@@ -235,20 +256,22 @@ export default class ResearchLogPlugin extends Plugin {
 	async exportCard(): Promise<void> {
 		const p = await this.pickProject();
 		if (!p) return;
-		const entries = await this.loadEntries(p);
-		const entry = await this.pickEntry(entries, "Which result?", (e) => e.type === "result" || e.type === "run");
-		if (!entry) return;
-		let remoteUrl: string | undefined;
-		if (p.repoPath.trim()) {
-			const info = gitInfo(this.runGitFor(p.repoPath.trim()), p.repoPath.trim());
-			if (info.ok) remoteUrl = info.remoteUrl;
-		}
-		const related = entries.filter((e) => e.id !== entry.id && e.commit && e.commit === entry.commit).slice(0, 10);
-		const content = renderReproCard({ entry, projectName: p.name, logPath: p.logPath, repoPath: p.repoPath, remoteUrl, related });
-		const path = normalizePath(`${projectFolder(p, this.settings.outputFolder)}/${cardFileName(p.name, entry)}`);
-		await writeNote(this.vault, path, content);
-		await this.app.workspace.openLinkText(path, "", false);
-		new Notice(`Reproducibility card written to ${path}.`);
+		await this.guarded("export the card", async () => {
+			const entries = await this.loadEntries(p);
+			const entry = await this.pickEntry(entries, "Which result?", (e) => e.type === "result" || e.type === "run");
+			if (!entry) return;
+			let remoteUrl: string | undefined;
+			if (p.repoPath.trim()) {
+				const info = gitInfo(this.runGitFor(p.repoPath.trim()), p.repoPath.trim());
+				if (info.ok) remoteUrl = info.remoteUrl;
+			}
+			const related = entries.filter((e) => e.id !== entry.id && e.commit && e.commit === entry.commit).slice(0, 10);
+			const content = renderReproCard({ entry, projectName: p.name, logPath: p.logPath, repoPath: p.repoPath, remoteUrl, related });
+			const path = normalizePath(`${projectFolder(p, this.settings.outputFolder)}/${cardFileName(p.name, entry)}`);
+			await writeNote(this.vault, path, content);
+			await this.app.workspace.openLinkText(path, "", false);
+			new Notice(`Reproducibility card written to ${path}.`);
+		});
 	}
 
 	// ---------------------------------------------------------------- settings
